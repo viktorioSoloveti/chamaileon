@@ -1,1 +1,47 @@
 /* You can add global styles to this file, and also import other style files */
+.layover {
+  z-index: 100;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	background: rgba(50, 50, 50, 0);
+	transition: background 0.5s ease;
+}
+
+.gallery-modal-images {
+  display: flex;
+}
+
+.gallery-modal-images > div {
+  width: calc(100% / 3);
+}
+
+.gallery-modal-images > div > img {
+  cursor: pointer;
+
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+
+  margin: 10px auto;
+}
+
+.gallery-modal-images > div > img:hover {
+  outline: 2px solid #aaaaaa;
+}
+
+
+.layover.visible {
+	background: rgba(50, 50, 50, 0.8);
+}
+
+.layover.visible > .modal {
+	margin-top: 0;
+}

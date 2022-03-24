@@ -3,14 +3,13 @@ import {
   Inject,
   Input,
   OnChanges,
-  SimpleChanges,
   TemplateRef,
   ViewContainerRef,
 } from '@angular/core';
+import { chamaileonSdk } from '.';
 import { API } from './tokens';
-import { SDK } from '.';
 
-export function extractAPI({ withSDK }: SdkDirective): SDK {
+export function extractAPI({ withSDK }: SdkDirective): chamaileonSdk {
   return withSDK;
 }
 
@@ -26,15 +25,12 @@ export function extractAPI({ withSDK }: SdkDirective): SDK {
 })
 export class SdkDirective implements OnChanges {
   @Input()
-  withSDK: SDK | null = null;
+  withSDK: chamaileonSdk | null = null;
 
   constructor(
     @Inject(TemplateRef) private readonly templateRef: TemplateRef<{}>,
     @Inject(ViewContainerRef) private readonly vcr: ViewContainerRef
-  ) {
-    console.log('dsa');
-
-  }
+  ) {}
 
 
   ngOnChanges(): void {

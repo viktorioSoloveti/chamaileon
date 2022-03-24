@@ -1,20 +1,18 @@
-import { Injectable } from "@angular/core";
-
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class AccessToken {
-  apiKey =  'h2dmDYW2gSS3rDgxb8bO';
+  apiKey = 'h2dmDYW2gSS3rDgxb8bO';
 
-  public async getAcessToken() {
-    const accTokenRequest = await fetch("https://sdk-api.chamaileon.io/api/v1/tokens/generate", {
-      method: "GET",
-      headers: {
-          "Authorization": `Bearer ${this.apiKey}`,
-      },
-    });
+  constructor(private http: HttpClient) {}
 
-      const accTokenResponse = await accTokenRequest.json();
-      return accTokenResponse.result;
+  public getAccessToken() {
+    return this.http
+      .get('https://sdk-api.chamaileon.io/api/v1/tokens/generate', {
+        headers: { Authorization: `Bearer ${this.apiKey}` },
+      })
+      .pipe(map((data: any) => data.result));
   }
-
 }

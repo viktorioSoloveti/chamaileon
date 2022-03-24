@@ -1,8 +1,8 @@
-export type SDK = any;
+export type chamaileonSdk = any;
 
 declare global {
   interface Window {
-    SDK: SDK;
+    chamaileonSdk: chamaileonSdk;
     libraryObject: any;
     onSdkReady: () => void;
   }
