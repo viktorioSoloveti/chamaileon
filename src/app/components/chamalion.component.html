@@ -1,2 +1,6 @@
 <button (click)="openEditor()">Открыть редактор</button>
-<p>{{emailDocument | json}}</p>
+<button (click)="getEmailHtml()">Перевести в HTML</button>
+<button (click)="json = !json">Изменить вывод</button>
+
+<p *ngIf="json">{{emailDocument | json}}</p>
+<p *ngIf="!json">{{html | json}}</p>

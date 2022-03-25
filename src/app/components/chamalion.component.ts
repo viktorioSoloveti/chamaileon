@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { AccessToken } from './../state/access.token';
 import { chamaileonSdk } from './../index.d';
 import {
@@ -19,19 +20,26 @@ import { emailData, imgData } from '../state/img.data';
 export class SDKComponent implements OnInit {
   chamaileonPlugins: Observable<object>;
   objectSDK: any;
+  editorInstance: any;
   imgData = imgData;
   galleryVisible = false;
-
+  apiKey = 'h2dmDYW2gSS3rDgxb8bO';
+  html: any;
+  json = true;
   emailDocument = JSON.parse(emailData);
+  blockLibraryData = new Map();
 
   constructor(
     @Inject(API) readonly chamaileonSdk: chamaileonSdk,
-    private accessToken: AccessToken
+    private accessToken: AccessToken,
+    private http: HttpClient
   ) {
     this.accessToken
       .getAccessToken()
       .pipe(mergeMap((token) => this.initChamaileonSDK(token)))
       .subscribe((data) => {
+        console.log(data);
+
         this.objectSDK = data;
       });
   }
@@ -66,9 +74,31 @@ export class SDKComponent implements OnInit {
     return from(chamaileonPlugins);
   }
 
-  openEditor() {
+  async openEditor() {
     const config = this.getEditorConfig();
-    this.objectSDK.editEmail(config);
+
+    this.editorInstance = await this.objectSDK.editEmail(config);
+  }
+
+  requestEmailHtml() {
+    return this.http.post(
+      'https://sdk-api.chamaileon.io/api/v1/emails/generate',
+      {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          document: this.emailDocument,
+        }),
+      }
+    );
+  }
+
+  getEmailHtml() {
+    this.requestEmailHtml().subscribe((d) => {
+      console.log(d);
+    });
   }
 
   private getGalleryConfig() {
@@ -76,11 +106,17 @@ export class SDKComponent implements OnInit {
       settings: {
         folderTree: {
           _id: 'root',
-          name: 'Root folder',
+          name: 'root',
           children: [
             {
-              id: '31231311',
-              name: 'Greate image',
+              _id: '16322284940689326',
+              name: 'Favorite Images',
+              children: [
+                {
+                  name: 'New Folder',
+                  _id: '16481987747204388',
+                },
+              ],
             },
           ],
         },
@@ -91,8 +127,7 @@ export class SDKComponent implements OnInit {
       hooks: {
         // @ts-ignore
         onUploadImage: ({ selectedFolderId, parents, image }) => {
-          console.log(image);
-
+          console.log('onUploadImage');
           return new Promise((resolve) => {
             resolve({
               _id: '231231',
@@ -102,6 +137,7 @@ export class SDKComponent implements OnInit {
           });
         },
         onFolderSelected: () => {
+          console.log('onFolderSelected');
           return new Promise((resolve) => {
             resolve({
               images: imgData,
@@ -110,6 +146,7 @@ export class SDKComponent implements OnInit {
           });
         },
         onSaveUrl: ({}) => {
+          console.log('onSaveUrl');
           return new Promise((resolve) => {
             resolve({
               _id: 'sdsdsd',
@@ -117,6 +154,18 @@ export class SDKComponent implements OnInit {
               src: 'https://upload.wikimedia.org/wikipedia/commons/d/d4/%D0%A3%D0%BF%D0%BE%D1%80%D0%BE%D1%82%D1%8B%D0%B9_%D0%BB%D0%B8%D1%81_1920x2560.jpg',
             });
           });
+        },
+
+        onUpdateImage: async ({
+          imageId,
+          parents,
+          selectedFolderId,
+          image,
+        }) => {
+          console.log('onUpdateImage');
+
+          return image;
+          // Update image
         },
       },
     };
@@ -155,7 +204,15 @@ export class SDKComponent implements OnInit {
             dynamicImage: true,
           },
         },
-        blockLibraries: [],
+        blockLibraries: [
+          {
+            id: '1',
+            label: 'library',
+            canDeleteBlock: true,
+            canRenameBlock: true,
+            canSaveBlock: true,
+          },
+        ],
         hideDefaultFonts: false, // if true, the default built-in font stacks are hidden, if false, the custom font stacks are added to the default ones.
         addons: {
           blockLock: {
@@ -209,15 +266,76 @@ export class SDKComponent implements OnInit {
             resolve();
           });
         },
-        onEditImage: async ({}) => {
-          const { src } = await this.objectSDK.openGallery(
+        onChange: () => {
+          return new Promise((resolve) => {
+            this.html = this.editorInstance.getEmailHtml();
+            this.html.then((value: any) => {
+              this.html = value;
+            });
+            resolve({});
+          });
+        },
+        //@ts-ignore
+        onEditImage: async () => {
+          const gallery = await this.objectSDK.openGallery(
             this.getGalleryConfig()
           );
-          return { src };
+          const { url } = await gallery.pickImage();
+          await gallery.close();
+          return { src: url };
+          //       const gal = await this.objectSDK.openGallery(this.getGalleryConfig());
+          // const obj = await gal.pickImage();
+          // console.log(obj);
         },
-        // onEditBackgroundImage:
+
+        //блоки
+        // @ts-ignore
+        onLoadBlocks: ({ libId }) => {
+          let blocks: any[] = [];
+          if (!this.blockLibraryData.has(libId)) {
+            blocks = [];
+          } else {
+            blocks = this.blockLibraryData.get(libId);
+          }
+          return new Promise((resolve) => {
+            resolve({ blocks });
+          });
+        },
+        // @ts-ignore
+        onBlockSave: ({ libId, block }) => {
+          if (!this.blockLibraryData.has(libId)) {
+            this.blockLibraryData.set(libId, []);
+          }
+          this.blockLibraryData.get(libId).push(block);
+          console.log(block.title);
+          return new Promise((resolve) => {
+            resolve({ block });
+          });
+        },
       },
     };
     return editorConfig;
+  }
+
+  private getVariableEditorConfig(dataEmail: any) {
+    const varEditorConfig = {
+      document: { dataEmail },
+      settings: {
+        variablesToEdit: ['varName1', 'varName2'],
+        buttons: {
+          header: {
+            left: [{id: 'test', icon: 'https://cdn-icons-png.flaticon.com/512/447/447057.png'}],
+            right: [],
+          },
+          footer: {
+            left: [],
+            right: [],
+          },
+          textInsertPlugin: [],
+        },
+        hooks: {},
+      },
+    };
+    return varEditorConfig;
   }
 }
