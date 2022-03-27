@@ -44,7 +44,10 @@ export class SDKComponent implements OnInit {
       });
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    console.log(this.emailDocument.body.children);
+    
+  }
 
   private initChamaileonSDK(token: string) {
     const chamaileonPlugins = this.chamaileonSdk.init({
@@ -73,11 +76,15 @@ export class SDKComponent implements OnInit {
     });
     return from(chamaileonPlugins);
   }
-
   async openEditor() {
     const config = this.getEditorConfig();
-
     this.editorInstance = await this.objectSDK.editEmail(config);
+  }
+
+  async openVarEditor() {
+    const config = this.getVariableEditorConfig(this.emailDocument);
+    console.log(config);
+    const varEditInstace = await this.objectSDK.editVariables(config);
   }
 
   requestEmailHtml() {
@@ -145,7 +152,7 @@ export class SDKComponent implements OnInit {
             });
           });
         },
-        onSaveUrl: ({}) => {
+        onSaveUrl: ({ }) => {
           console.log('onSaveUrl');
           return new Promise((resolve) => {
             resolve({
@@ -319,23 +326,22 @@ export class SDKComponent implements OnInit {
 
   private getVariableEditorConfig(dataEmail: any) {
     const varEditorConfig = {
-      document: { dataEmail },
+      document: dataEmail,
       settings: {
-        variablesToEdit: ['varName1', 'varName2'],
+        variablesToEdit: ['test'],
         buttons: {
           header: {
-            left: [{id: 'test', icon: 'https://cdn-icons-png.flaticon.com/512/447/447057.png'}],
-            right: [],
+            left: [{ id: 'close', icon: 'arrow_back' }]
           },
           footer: {
-            left: [],
-            right: [],
+            left: [{ id: 'prev', label: 'Prev' }],
+            right: [{ id: 'next', label: 'Next' }]
           },
-          textInsertPlugin: [],
-        },
-        hooks: {},
+          textInsertPlugin: [{ id: 'merge-tags', label: 'Merge Tags', icon: 'https://raw.githubusercontent.com/ckeditor/ckeditor4/major/skins/kama/icons/paste.png' }],
+        }
       },
-    };
+      hooks: {},
+    }
     return varEditorConfig;
   }
 }
